@@ -1,0 +1,10 @@
+.vs/
+Common/bin/
+Common/obj/
+Database/obj/
+PFApiServer/bin/
+PFApiServer/obj/
+PFApiServer/log/
+Tools/TableConvertor/TableTester/obj/
+Tools/TableConvertor/TableConvertor/obj/
+Tools/SDKStore/obj/
