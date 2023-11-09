@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TableConvertor": {
+      "commandName": "Project",
+      "commandLineArgs": "/o=.\\ /s=.\\"
+    }
+  }
+}

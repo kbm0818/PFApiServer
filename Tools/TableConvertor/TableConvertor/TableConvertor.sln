@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableConvertor", "TableConvertor.csproj", "{551CDCB8-2418-4528-9560-B2BBCE3206CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TableTester", "..\TableTester\TableTester.csproj", "{589B0AA2-C842-422B-A3A2-D095660DB515}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{551CDCB8-2418-4528-9560-B2BBCE3206CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{551CDCB8-2418-4528-9560-B2BBCE3206CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{551CDCB8-2418-4528-9560-B2BBCE3206CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{551CDCB8-2418-4528-9560-B2BBCE3206CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{589B0AA2-C842-422B-A3A2-D095660DB515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{589B0AA2-C842-422B-A3A2-D095660DB515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{589B0AA2-C842-422B-A3A2-D095660DB515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{589B0AA2-C842-422B-A3A2-D095660DB515}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {509D6F8A-87F8-4710-9383-E72DB06B6A77}
+	EndGlobalSection
+EndGlobal
