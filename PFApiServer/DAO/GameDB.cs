@@ -1,4 +1,0 @@
-﻿namespace PFApiServer.DAO.GameDB
-{
-   
-}

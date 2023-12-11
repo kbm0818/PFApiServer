@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package PFApiServer.Protocols;
+
+//////////////////////////// Login ////////////////////////////
+
+message CSCheckVersion{
+	string version = 1;
+}
+
+message SCCheckVersion{
+	bool isLatest = 1;
+}
+
+message CSLogin{
+	int64 uid = 1;
+	int32 platformType = 2;
+}
+
+message SCLogin{
+	int64 uid = 1;
+	string token = 2;
+	string nickname = 3;
+	int32 status = 4;
+	int64 statusAt = 5;  
+}

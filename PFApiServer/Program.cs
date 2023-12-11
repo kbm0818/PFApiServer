@@ -1,96 +1,70 @@
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using MySql.EntityFrameworkCore.Extensions;
 using PFApiServer;
-using PFApiServer.RDB;
-using PFApiServer.Redis;
-using System;
-using System.Text.Json;
-using ZLogger;
+using PFApiServer.Models.Global;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-IConfiguration configuration = builder.Configuration;
-builder.Services.Configure<DBConfig>(configuration.GetSection(nameof(DBConfig)));
-builder.Services.AddTransient<IGlobalDB, GlobalDB>();
-builder.Services.AddSingleton<IUserDB, UserDB>();
+// 라우팅 로직 즉 controllers/actions 이 동작되도록 서비스에 추가한다
 builder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-//builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
+// 기본적으로 ASP.NET에선 JSON 직렬화를 System.Text.Json을 사용한다
+// 대신 NewtonsoftJson을 사용하기 위한 호출이다
+builder.Services.AddControllers().AddNewtonsoftJson();
 
-SettingLogger();
+#region DBContext 추가
+builder.Services.AddEntityFrameworkMySQL()
+                .AddDbContextPool<GlobalContext>(options =>
+                {
+#if DEBUG
+                    options.UseMySQL(builder.Configuration.GetConnectionString("DatabaseConnection_Global_Dev")!);
+#elif RELEASE
+                    options.UseMySQL(builder.Configuration.GetConnectionString("DatabaseConnection_Global")!);
+#endif
+                });
+#endregion DBContext 추가
+
+#region Redis 추가
+#if DEBUG
+builder.Services.AddStackExchangeRedisCache(options => { options.Configuration = builder.Configuration.GetConnectionString("RedisConnection_Dev"); });
+ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection_Dev")!);
+#elif RELEASE 
+builder.Services.AddStackExchangeRedisCache(options => { options.Configuration = builder.Configuration.GetConnectionString("RedisConnection"); });
+ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection")!);
+#endif
+builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+#endregion Redis 추가
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-//app.UseHttpsRedirection();
-//app.UseAuthorization();
-//app.MapControllers();
-
-ILoggerFactory loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-LogManager.SetLoggerFactory(loggerFactory, "Global");
-
-app.UseMiddleware<PFApiServer.Middleware.CheckUserAuthAndLoadUserData>();
-
-app.UseRouting();
-#pragma warning disable ASP0014
-app.UseEndpoints(endpoints => { _ = endpoints.MapControllers(); });
-#pragma warning restore ASP0014
-
-var userDB = app.Services.GetRequiredService<IUserDB>();
-userDB.Init(configuration.GetSection("DBConfig")["Redis"] ?? throw new ArgumentNullException());
-
-app.Run();
-//app.Run(configuration["ServerAddress"]);
-
-void SettingLogger()
+// Forward headers in order to be able to operate behind a reverse proxy
+// 역방향 프록시에서도 동작할수 있도록 추가
+app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ILoggingBuilder logging = builder.Logging;
-    _ = logging.ClearProviders();
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
-    string fileDir = configuration["logdir"]!;
-
-    bool exists = Directory.Exists(fileDir);
-
-    if (!exists)
-    {
-        _ = Directory.CreateDirectory(fileDir);
-    }
-
-    _ = logging.AddZLoggerRollingFile(
-        (dt, x) => $"{fileDir}{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log",
-        x => x.ToLocalTime().Date, 1024,
-        options =>
-        {
-            options.EnableStructuredLogging = true;
-            JsonEncodedText time = JsonEncodedText.Encode("Timestamp");
-            //DateTime.Now는 UTC+0 이고 한국은 UTC+9이므로 9시간을 더한 값을 출력한다.
-            JsonEncodedText timeValue = JsonEncodedText.Encode(DateTime.Now.AddHours(9).ToString("yyyy/MM/dd HH:mm:ss"));
-
-            options.StructuredLoggingFormatter = (writer, info) =>
-            {
-                writer.WriteString(time, timeValue);
-                info.WriteToJsonWriter(writer);
-            };
-        }); // 1024KB
-
-    _ = logging.AddZLoggerConsole(options =>
-    {
-        options.EnableStructuredLogging = true;
-        JsonEncodedText time = JsonEncodedText.Encode("EventTime");
-        JsonEncodedText timeValue = JsonEncodedText.Encode(DateTime.Now.AddHours(9).ToString("yyyy/MM/dd HH:mm:ss"));
-
-        options.StructuredLoggingFormatter = (writer, info) =>
-        {
-            writer.WriteString(time, timeValue);
-            info.WriteToJsonWriter(writer);
-        };
-    });
-
+if (!app.Environment.IsDevelopment())
+{
+    // Enable exception handling middleware
+    app.UseExceptionHandler("/Error");
+    // HTTPS만 사용 강제
+    app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage();
+    // 사용된 데이터베이스에 보류 중인 마이그레이션이 있으면 적용한다
+    //app.UseMigrationsEndPoint();
+}
+
+// 인증을 처리하는 자체 미들웨어를 구현
+app.UseAuthentication();
+
+#region 미들웨어 추가
+#endregion 미들웨어 추가
+
+app.MapControllers();
+app.Run();
